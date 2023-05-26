@@ -3,7 +3,10 @@
 
 int main()
 {
-  libssh::SSHClient client("172.19.234.41", "gugugu", "0518");
+  std::string host("172.30.84.59");
+  std::string user("gugugu");
+  std::string passwd("0518");
+  libssh::SSHClient client(host, user, passwd);
   if (!client.connect())
   {
     std::cerr << "failed to connect!\n";
@@ -17,7 +20,7 @@ int main()
     return 1;
   }
   std::cout << out << "\n";
-  std::cout << "size: " << out.size() << "\n";
-  std::cout << Utils::String2Hex(out) << "\n";
+  // std::cout << "size: " << out.size() << "\n";
+  // std::cout << Utils::String2Hex(out) << "\n";
   return 0;
 }

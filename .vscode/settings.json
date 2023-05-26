@@ -1,9 +1,10 @@
 {
     "cmake.configureSettings": {
-      "CMAKE_TOOLCHAIN_FILE": "F:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "CMAKE_TOOLCHAIN_FILE": "F:/develop/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "VCPKG_TARGET_TRIPLET": "x64-windows"
     },
     "C_Cpp.default.includePath": [
-        "F:\\vcpkg\\installed\\x64-windows\\include"
+        "F:\\develop\\vcpkg\\installed\\x64-windows\\include",
+        "include"
     ],
 }
