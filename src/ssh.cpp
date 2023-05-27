@@ -42,7 +42,7 @@ bool SSHSession::connect()
     int status = ssh_connect(m_session);
     if (status != SSH_OK)
     {
-        std::cerr << "failed to connect session\n";
+        std::cerr << "Failed to connect session\n";
         m_is_connected = false;
         return false;
     }
@@ -60,7 +60,7 @@ bool SSHSession::login()
     int status = ssh_userauth_password(m_session, nullptr, m_password.c_str());
     if (status != SSH_AUTH_SUCCESS)
     {
-        std::cerr << "failed to login\n";
+        std::cerr << "Failed to login\n";
         m_is_logined = false;
         return false;
     }
@@ -87,7 +87,7 @@ std::unique_ptr<SSHChannel> SSHSession::createChannel()
     return std::make_unique<SSHChannel>(*this);
 }
 
-ssh_session& SSHSession::getSession()
+ssh_session &SSHSession::getSession()
 {
     return m_session;
 }
@@ -105,18 +105,22 @@ bool SSHSession::disconnect()
 SSHChannel::SSHChannel(SSHSession &session)
     : session(session), channel(nullptr)
 {
+    if (!session.isConnected())
+    {
+        throw std::runtime_error("Failed to create SSH channel: session not connected");
+    }
     channel = ssh_channel_new(session.getSession());
     if (!channel)
     {
         std::cerr << "ssh_channel_new failed\n";
         std::cerr << std::string(ssh_get_error(session.getSession()));
-        throw std::runtime_error("failed to new channel");
+        throw std::runtime_error("Failed to create SSH channel");
     }
 }
 
 SSHChannel::~SSHChannel()
 {
-    if (channel != nullptr)
+    if (channel)
     {
         close();
         ssh_channel_free(channel);
@@ -176,13 +180,13 @@ std::string SSHChannel::read()
     }
     std::string output;
     const int READ_BUFFER_SIZE = 4096;
-    char buffer[READ_BUFFER_SIZE] = { 0 };
+    char buffer[READ_BUFFER_SIZE] = {0};
     int nbytes = 0;
     while (nbytes = ssh_channel_read(channel, buffer, READ_BUFFER_SIZE, 0))
     {
-        // Todo
         if (nbytes < 0)
         {
+            std::cerr << "Error reading from channel\n";
             return output;
         }
         std::cout << "read " << nbytes << "\n";
