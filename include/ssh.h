@@ -53,9 +53,9 @@ namespace libssh
         bool close();
 
     private:
-        SSHSession &session;
-        ssh_channel channel{nullptr};
-        bool is_opened{false};
+        SSHSession &m_session;
+        ssh_channel m_channel{nullptr};
+        bool m_is_opened{false};
     };
 
     class SSHClient
@@ -70,8 +70,8 @@ namespace libssh
         bool isConnected();
 
     private:
-        SSHSession session;
-        bool connected{false};
+        SSHSession m_session;
+        bool m_connected{false};
     };
 }
 

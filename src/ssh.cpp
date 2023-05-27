@@ -36,13 +36,17 @@ void SSHSession::setPassword(const std::string &passwd)
 
 bool SSHSession::connect()
 {
+    if (isConnected())
+    {
+        disconnect();
+    }
     ssh_options_set(m_session, SSH_OPTIONS_HOST, m_host.c_str());
     ssh_options_set(m_session, SSH_OPTIONS_USER, m_user.c_str());
     ssh_options_set(m_session, SSH_OPTIONS_PORT, &m_port);
     int status = ssh_connect(m_session);
     if (status != SSH_OK)
     {
-        std::cerr << "Failed to connect session\n";
+        std::cerr << "Failed to connect session: " << ssh_get_error(m_session) << "\n";
         m_is_connected = false;
         return false;
     }
@@ -60,7 +64,7 @@ bool SSHSession::login()
     int status = ssh_userauth_password(m_session, nullptr, m_password.c_str());
     if (status != SSH_AUTH_SUCCESS)
     {
-        std::cerr << "Failed to login\n";
+        std::cerr << "Failed to login: " << ssh_get_error(m_session) << "\n";
         m_is_logined = false;
         return false;
     }
@@ -103,33 +107,32 @@ bool SSHSession::disconnect()
 }
 
 SSHChannel::SSHChannel(SSHSession &session)
-    : session(session), channel(nullptr)
+    : m_session(session), m_channel(nullptr)
 {
     if (!session.isConnected())
     {
         throw std::runtime_error("Failed to create SSH channel: session not connected");
     }
-    channel = ssh_channel_new(session.getSession());
-    if (!channel)
+    m_channel = ssh_channel_new(session.getSession());
+    if (!m_channel)
     {
-        std::cerr << "ssh_channel_new failed\n";
-        std::cerr << std::string(ssh_get_error(session.getSession()));
+        std::cerr << "ssh_channel_new failed: " << ssh_get_error(session.getSession()) << "\n";
         throw std::runtime_error("Failed to create SSH channel");
     }
 }
 
 SSHChannel::~SSHChannel()
 {
-    if (channel)
+    if (m_channel)
     {
         close();
-        ssh_channel_free(channel);
+        ssh_channel_free(m_channel);
     }
 }
 
 bool SSHChannel::isOpened() const
 {
-    return is_opened;
+    return m_is_opened;
 }
 
 bool SSHChannel::open()
@@ -139,20 +142,20 @@ bool SSHChannel::open()
         return true;
     }
 
-    if (!session.isConnected() || !session.isLogined())
+    if (!m_session.isConnected() || !m_session.isLogined())
     {
-        is_opened = false;
+        m_is_opened = false;
         return false;
     }
 
-    int status = ssh_channel_open_session(channel);
+    int status = ssh_channel_open_session(m_channel);
     if (status != SSH_OK)
     {
-        std::cerr << "failed to open channel\n";
-        is_opened = false;
+        std::cerr << "Failed to open SSH channel: " << ssh_get_error(m_session.getSession()) << "\n";
+        m_is_opened = false;
         return false;
     }
-    is_opened = true;
+    m_is_opened = true;
     return true;
 }
 
@@ -163,7 +166,7 @@ bool SSHChannel::execute(const std::string &command)
         open();
     }
 
-    int status = ssh_channel_request_exec(channel, command.c_str());
+    int status = ssh_channel_request_exec(m_channel, command.c_str());
     if (status != SSH_OK)
     {
         return false;
@@ -182,14 +185,13 @@ std::string SSHChannel::read()
     const int READ_BUFFER_SIZE = 4096;
     char buffer[READ_BUFFER_SIZE] = {0};
     int nbytes = 0;
-    while (nbytes = ssh_channel_read(channel, buffer, READ_BUFFER_SIZE, 0))
+    while (nbytes = ssh_channel_read(m_channel, buffer, READ_BUFFER_SIZE, 0))
     {
         if (nbytes < 0)
         {
             std::cerr << "Error reading from channel\n";
             return output;
         }
-        std::cout << "read " << nbytes << "\n";
         output.append(buffer, nbytes);
     }
     return output;
@@ -201,13 +203,13 @@ bool SSHChannel::close()
     {
         return false;
     }
-    ssh_channel_close(channel);
-    is_opened = false;
+    ssh_channel_close(m_channel);
+    m_is_opened = false;
     return true;
 }
 
 SSHClient::SSHClient(const std::string &host, const std::string &username, const std::string &password, int port)
-    : session(host, username, password, port) {}
+    : m_session(host, username, password, port) {}
 
 SSHClient::~SSHClient()
 {
@@ -216,7 +218,7 @@ SSHClient::~SSHClient()
 
 bool SSHClient::connect()
 {
-    if (!session.connect() || !session.login())
+    if (!m_session.connect() || !m_session.login())
     {
         return false;
     }
@@ -225,17 +227,17 @@ bool SSHClient::connect()
 
 bool SSHClient::disconnect()
 {
-    if (!session.disconnect())
+    if (!m_session.disconnect())
     {
         return false;
     }
-    connected = false;
+    m_connected = false;
     return true;
 }
 
 bool SSHClient::execute(const std::string &command, std::string &output)
 {
-    auto channel = session.createChannel();
+    auto channel = m_session.createChannel();
     if (!channel)
     {
         return false;
@@ -251,5 +253,5 @@ bool SSHClient::execute(const std::string &command, std::string &output)
 
 bool SSHClient::isConnected()
 {
-    return connected;
+    return m_connected;
 }
