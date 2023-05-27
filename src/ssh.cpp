@@ -2,14 +2,42 @@
 
 using namespace libssh;
 
+SSHInitializer *SSHInitializer::getInstance()
+{
+    if (!instance)
+    {
+        instance = new SSHInitializer();
+    }
+    return instance;
+}
+
+SSHInitializer::SSHInitializer()
+{
+    int ret = ssh_init();
+    if (ret != SSH_OK)
+    {
+        std::cerr << "Failed to initialize SSH!\n";
+        throw std::runtime_error("Failed to initialize SSH");
+    }
+}
+
+SSHInitializer *SSHInitializer::instance = nullptr;
+static SSHInitializer *sshInitializer = SSHInitializer::getInstance();
+
+
+SSHInitializer::~SSHInitializer()
+{
+    ssh_finalize();
+}
+
 SSHSession::SSHSession(const std::string &host, const std::string &user, const std::string &password, int port)
     : m_session(nullptr), m_host(host), m_user(user), m_password(password), m_port(port)
 {
     m_session = ssh_new();
     if (m_session == nullptr)
     {
-        std::cerr << "ssh_new failed\n";
-        throw std::runtime_error("failed to ssh_new!");
+        std::cerr << "Failed to ssh_new\n";
+        throw std::runtime_error("Failed to ssh_new!");
     }
 }
 

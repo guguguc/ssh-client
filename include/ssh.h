@@ -7,6 +7,19 @@
 
 namespace libssh
 {
+    class SSHInitializer
+    {
+    public:
+        static SSHInitializer *getInstance();
+
+    private:
+        static SSHInitializer *instance;
+
+        SSHInitializer();
+
+        ~SSHInitializer();
+    };
+
     class SSHSession
     {
         friend class SSHChannel;
@@ -28,7 +41,7 @@ namespace libssh
         std::unique_ptr<SSHChannel> createChannel();
 
     protected:
-        ssh_session& getSession();
+        ssh_session &getSession();
 
     private:
         ssh_session m_session{nullptr};
