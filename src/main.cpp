@@ -1,24 +1,47 @@
 #include "ssh.h"
 #include "utils.h"
+#include <iostream>
+#include <string>
 
-const std::string HOST = "172.30.84.59";
-const std::string USER = "gugugu";
-const std::string PASSWD = "0518";
+int main()
+{
+  std::string host, user, passwd;
 
-int main() {
-  try {
-    libssh::SSHClient client(HOST, USER, PASSWD);
-    if (!client.connect()) {
-      throw std::runtime_error("Failed to connect!");
-    }
-    std::string out;
-    if (!client.execute("ps aux", out)) {
-      throw std::runtime_error("Failed to execute command");
-    }
-    std::cout << out << "\n";
-  } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << "\n";
+  std::cout << "Enter HOST: ";
+  std::cin >> host;
+  std::cout << "Enter USER: ";
+  std::cin >> user;
+  std::cout << "Enter PASSWD: ";
+  std::cin >> passwd;
+
+  libssh::SSHClient client(host, user, passwd);
+  if (!client.connect())
+  {
+    std::cerr << "Failed to connect!\n";
     return 1;
   }
+
+  std::cout << "Enter command (or 'exit' to quit): ";
+  while (true)
+  {
+    std::string command;
+    std::cout << "client: ";
+    std::getline(std::cin, command);
+    if (command == "exit")
+    {
+      break;
+    }
+
+    std::string out;
+    if (!client.execute(command, out))
+    {
+      std::cerr << "Failed to execute command\n";
+    }
+    else
+    {
+      std::cout << "server:\n" << out;
+    }
+  }
+
   return 0;
 }
