@@ -1,0 +1,37 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main # Change this to your default branch name
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest # Change this to your preferred OS and version
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up MSVC environment # Change this if you're using a different compiler
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Install vcpkg dependencies # Replace the path with the correct one on your machine
+      run: |
+        mkdir vcpkg
+        cd vcpkg
+        git clone https://github.com/Microsoft/vcpkg.git .
+        .\bootstrap-vcpkg.bat
+        .\vcpkg install libssh:x64-windows-static
+
+    - name: Build project
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        msbuild ssh-client.sln /p:Configuration=Release
+
+    - name: Test project # Add test commands here, if needed
+      run: |
+        cd build
+        ctest -C Release -V
