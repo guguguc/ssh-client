@@ -23,9 +23,11 @@ jobs:
         git clone https://github.com/Microsoft/vcpkg.git .
         .\bootstrap-vcpkg.bat
         .\vcpkg install libssh:x64-windows-static
+        .\vcpkg list
 
     - name: Build project
       run: |
+        .\vcpkg\vcpkg list
         mkdir build
         cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="../vcpkg/scripts/buildsystems/vcpkg.cmake" -DCPKG_TARGET_TRIPLET="x64-windows-static"
