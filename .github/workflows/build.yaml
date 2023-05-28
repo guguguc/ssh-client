@@ -28,7 +28,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="../vcpkg/scripts/buildsystems/vcpkg.cmake" -DCPKG_TARGET_TRIPLET="x64-windows-static"
         msbuild ssh-client.sln /p:Configuration=Release
 
     - name: Test project # Add test commands here, if needed
