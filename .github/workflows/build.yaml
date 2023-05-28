@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches:
-      - main # Change this to your default branch name
+      - master # Change this to your default branch name
   pull_request:
 
 jobs:
